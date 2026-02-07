@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "wonderMoments - Transform Your Kids & Pets",
+  title: "WonderMoments - Transform Your Kids & Pets",
   description: "Create magical AI-generated images of your kids and pets as superheroes and more!",
 };
 

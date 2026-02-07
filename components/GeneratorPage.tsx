@@ -126,7 +126,7 @@ export default function GeneratorPage({ templates }: GeneratorPageProps) {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                wonderMoments
+                WonderMoments
               </h1>
               <p className="text-gray-600 mt-1">Transform your kids and pets into magical characters</p>
             </div>

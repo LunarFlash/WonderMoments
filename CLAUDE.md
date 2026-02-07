@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-wonderMoments is an AI-powered image generation web app. Users sign in, select a template (e.g., superhero themes), upload a photo, and generate a stylized image. The core image generation integration is currently a placeholder.
+WonderMoments is an AI-powered image generation web app. Users sign in, select a template (e.g., superhero themes), upload a photo, and generate a stylized image. The core image generation integration is currently a placeholder.
 
 ## Tech Stack
 
