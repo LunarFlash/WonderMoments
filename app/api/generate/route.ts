@@ -96,19 +96,44 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Upload generated image to Supabase Storage
+    let storedImageUrl = result.imageUrl
+    if (result.imageBase64 && result.imageMimeType) {
+      const ext = result.imageMimeType.split('/')[1] || 'png'
+      const fileName = `${user.id}/${generation.id}.${ext}`
+      const buffer = Buffer.from(result.imageBase64, 'base64')
+
+      const { error: uploadError } = await supabase.storage
+        .from('generated-images')
+        .upload(fileName, buffer, {
+          contentType: result.imageMimeType,
+          cacheControl: '3600',
+          upsert: false,
+        })
+
+      if (!uploadError) {
+        const { data: publicUrlData } = supabase.storage
+          .from('generated-images')
+          .getPublicUrl(fileName)
+        storedImageUrl = publicUrlData.publicUrl
+      } else {
+        console.error('Error uploading generated image:', uploadError)
+      }
+    }
+
     // Update generation record with result
     await supabase
       .from('generations')
       .update({
         status: 'completed',
-        generated_image_url: result.imageUrl,
+        generated_image_url: storedImageUrl,
       })
       .eq('id', generation.id)
 
     return NextResponse.json({
       success: true,
       generationId: generation.id,
-      imageUrl: result.imageUrl,
+      imageUrl: storedImageUrl,
       quota: quotaCheck,
     })
   } catch (error) {

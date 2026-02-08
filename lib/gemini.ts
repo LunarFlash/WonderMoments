@@ -5,7 +5,7 @@ export async function generateImage(
   prompt: string,
   imageBase64: string,
   imageMimeType: string
-): Promise<{ success: boolean; imageUrl?: string; error?: string }> {
+): Promise<{ success: boolean; imageUrl?: string; imageBase64?: string; imageMimeType?: string; error?: string }> {
   try {
     const response = await fetch(`${GEMINI_API_URL}?key=${process.env.GEMINI_API_KEY}`, {
       method: 'POST',
@@ -51,7 +51,7 @@ export async function generateImage(
         const generatedBase64 = inlineData.data
         const generatedMimeType = inlineData.mime_type || inlineData.mimeType || 'image/png'
         const dataUrl = `data:${generatedMimeType};base64,${generatedBase64}`
-        return { success: true, imageUrl: dataUrl }
+        return { success: true, imageUrl: dataUrl, imageBase64: generatedBase64, imageMimeType: generatedMimeType }
       }
     }
 
