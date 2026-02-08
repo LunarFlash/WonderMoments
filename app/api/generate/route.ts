@@ -18,9 +18,9 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { templateId, inputImageUrl, userInputs } = body
+    const { templateId, inputImageUrl, imageBase64, imageMimeType, userInputs } = body
 
-    if (!templateId || !inputImageUrl) {
+    if (!templateId || (!inputImageUrl && !imageBase64)) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
     const prompt = processPromptTemplate(template.prompt_template, inputs)
 
     // Generate image
-    const result = await generateImage(prompt, inputImageUrl)
+    const result = await generateImage(prompt, imageBase64, imageMimeType || 'image/jpeg')
 
     if (!result.success) {
       // Update generation record with error

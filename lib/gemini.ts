@@ -1,51 +1,63 @@
-import { GoogleGenerativeAI } from '@google/generative-ai'
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
+const GEMINI_API_URL =
+  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent'
 
 export async function generateImage(
   prompt: string,
-  imageUrl: string
+  imageBase64: string,
+  imageMimeType: string
 ): Promise<{ success: boolean; imageUrl?: string; error?: string }> {
   try {
-    // Note: As of now, Gemini API primarily focuses on text generation and image understanding.
-    // For image generation, you might need to use Imagen API or another service.
-    // This is a placeholder implementation that you'll need to adapt based on the actual API.
+    const response = await fetch(`${GEMINI_API_URL}?key=${process.env.GEMINI_API_KEY}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              {
+                text: `Using the person/subject in the provided photo as reference, generate a new image based on this prompt: ${prompt}. Make sure the generated image closely resembles the subject in the original photo.`,
+              },
+              {
+                inline_data: {
+                  mime_type: imageMimeType,
+                  data: imageBase64,
+                },
+              },
+            ],
+          },
+        ],
+        generationConfig: {
+          responseModalities: ['TEXT', 'IMAGE'],
+        },
+      }),
+    })
 
-    // For now, we'll use Gemini for image analysis and text generation
-    // You may need to integrate with Google's Imagen API or another image generation service
-
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro-vision' })
-
-    // Fetch the image
-    const response = await fetch(imageUrl)
-    const imageBuffer = await response.arrayBuffer()
-    const base64Image = Buffer.from(imageBuffer).toString('base64')
-
-    const imagePart = {
-      inlineData: {
-        data: base64Image,
-        mimeType: 'image/jpeg',
-      },
+    if (!response.ok) {
+      const errorData = await response.json()
+      console.error('Gemini API error:', JSON.stringify(errorData))
+      return {
+        success: false,
+        error: errorData.error?.message || `API error: ${response.status}`,
+      }
     }
 
-    // Generate description and instructions for image editing
-    const result = await model.generateContent([
-      prompt,
-      imagePart,
-    ])
+    const data = await response.json()
 
-    const textResponse = result.response.text()
-
-    // Note: This is a simplified implementation
-    // You'll need to integrate with an actual image generation API like:
-    // - Google Imagen
-    // - DALL-E
-    // - Stable Diffusion
-    // - Midjourney API
+    // Look for generated image in the response
+    const parts = data.candidates?.[0]?.content?.parts || []
+    for (const part of parts) {
+      const inlineData = part.inline_data || part.inlineData
+      if (inlineData) {
+        const generatedBase64 = inlineData.data
+        const generatedMimeType = inlineData.mime_type || inlineData.mimeType || 'image/png'
+        const dataUrl = `data:${generatedMimeType};base64,${generatedBase64}`
+        return { success: true, imageUrl: dataUrl }
+      }
+    }
 
     return {
       success: false,
-      error: 'Image generation API integration needed. Please integrate with Imagen or similar service.',
+      error: 'No image was generated. The model returned only text.',
     }
   } catch (error) {
     console.error('Error generating image:', error)

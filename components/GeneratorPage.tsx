@@ -72,12 +72,19 @@ export default function GeneratorPage({ templates }: GeneratorPageProps) {
     setGeneratedImageUrl(null)
 
     try {
-      // Upload image to Supabase Storage
-      const uploadedUrl = await uploadImage(uploadedFile, user.id)
+      // Read file as base64 to send directly to the API
+      const base64 = await new Promise<string>((resolve) => {
+        const reader = new FileReader()
+        reader.onloadend = () => {
+          const dataUrl = reader.result as string
+          resolve(dataUrl.split(',')[1])
+        }
+        reader.readAsDataURL(uploadedFile)
+      })
+      const mimeType = uploadedFile.type || 'image/jpeg'
 
-      if (!uploadedUrl) {
-        throw new Error('Failed to upload image')
-      }
+      // Upload image to Supabase Storage (for record keeping)
+      const uploadedUrl = await uploadImage(uploadedFile, user.id)
 
       // Call generation API
       const response = await fetch('/api/generate', {
@@ -87,7 +94,9 @@ export default function GeneratorPage({ templates }: GeneratorPageProps) {
         },
         body: JSON.stringify({
           templateId: selectedTemplate.id,
-          inputImageUrl: uploadedUrl,
+          inputImageUrl: uploadedUrl || '',
+          imageBase64: base64,
+          imageMimeType: mimeType,
           userInputs: {
             subject: subjectName || 'person',
           },
